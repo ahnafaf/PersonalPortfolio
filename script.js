@@ -1,10 +1,16 @@
 let scene, camera, renderer, earthMesh;
 let debugMode = true; // Set this to true for coordinate debugging
+let mixer;
+let clock;
+let animationSpeed = 0.2; // 0.5 means half speed, adjust as needed
+let starField;
+const starCount = 12000;
 
 const lifeEvents = [
-    { name: 'Bangladesh', lat: 15.0906, lon: 192.3428, age: '0', description: 'Born in Bangladesh' },
-    { name: 'Dubai', lat: 19.4752, lon: 140.0686, age: '3 months old', description: 'Moved to Dubai at 3 months old, parents had started their lives in a small 1 bedroom apartment.' },
-    { name: 'USA', lat: 34.9451, lon: 12.8719, age: 'Later', description: 'Flew out on a trip to America, this is when I realized that as much as I loved Dubai. I would want to be able to pursue my education in North America and learn more about its culture.' }
+    { name: 'Dhaka, Bangladesh', lat: 15.0906, lon: 192.3428, age: '0', description: 'Born in Bangladesh' },
+    { name: 'Dubai, United Arab Emirates', lat: 19.4752, lon: 140.0686, age: '3 months old', description: 'Moved to Dubai at 3 months old, parents had started their lives in a small 1 bedroom apartment.' },
+    { name: 'New York, United States', lat: 34.9451, lon: 12.8719, age: 'Later', description: 'Flew out on a trip to America, this is when I realized that as much as I loved Dubai. \nI would want to be able to pursue my education in North America and learn more about its culture.' },
+    { name: 'Manitoba, Canada', lat: 39.5288, lon: -8.9005, age: 'Later', description: 'Swag' }
 ];
 
 let currentEventIndex = 0;
@@ -15,16 +21,24 @@ let currentZoom = 1.5;
 let manualRotationX = 0;
 let manualRotationY = 0;
 
+let rotationSpeed = 0.001; // Adjust this value to change rotation speed
+let isRotating = true;
+
 function init() {
     console.log("Initializing...");
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    scene.background = new THREE.Color(0x000000);  // Set background to black
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
     camera.position.set(0, 0, currentZoom);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    createStarField();
+
+    clock = new THREE.Clock();
 
     const loader = new THREE.GLTFLoader();
     loader.load(
@@ -32,9 +46,20 @@ function init() {
         function (gltf) {
             earthMesh = gltf.scene;
             earthMesh.scale.set(0.4, 0.4, 0.4);
+            
             scene.add(earthMesh);
             positionEarthToEvent(lifeEvents[currentEventIndex], false);
             updateInfoPanel(lifeEvents[currentEventIndex]);
+
+            // Set up animation
+            mixer = new THREE.AnimationMixer(earthMesh);
+            gltf.animations.forEach((clip) => {
+                const action = mixer.clipAction(clip);
+                action.setEffectiveTimeScale(animationSpeed);
+                action.play();
+            });
+
+            console.log("Animations:", gltf.animations);
         },
         function (xhr) {
             console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -59,6 +84,29 @@ function init() {
     setupDraggable();
 
     console.log("Initialization complete");
+}
+
+function createStarField() {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+
+    for (let i = 0; i < starCount; i++) {
+        const x = Math.random() * 2000 - 1000;
+        const y = Math.random() * 2000 - 1000;
+        const z = Math.random() * 2000 - 1000;
+        vertices.push(x, y, z);
+    }
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+    const material = new THREE.PointsMaterial({
+        color: 0xFFFFFF,
+        size: 2,
+        sizeAttenuation: true
+    });
+
+    starField = new THREE.Points(geometry, material);
+    scene.add(starField);
 }
 
 function setupDebugControls() {
@@ -151,6 +199,8 @@ function updateDebugPanel() {
 function positionEarthToEvent(event, animate = true) {
     if (!earthMesh) return;
 
+    isRotating = false; // Stop the rotation
+
     const targetRotationX = THREE.MathUtils.degToRad(event.lat);
     const targetRotationY = -THREE.MathUtils.degToRad(event.lon);
 
@@ -166,6 +216,7 @@ function positionEarthToEvent(event, animate = true) {
                 manualRotationX = targetRotationX;
                 manualRotationY = targetRotationY;
                 updateDebugPanel();
+                isRotating = true; // Resume rotation after arriving at the event
             }
         });
     } else {
@@ -174,6 +225,7 @@ function positionEarthToEvent(event, animate = true) {
         manualRotationX = targetRotationX;
         manualRotationY = targetRotationY;
         updateDebugPanel();
+        isRotating = true; // Resume rotation immediately for non-animated positioning
     }
 }
 
@@ -210,6 +262,17 @@ function onWindowResize() {
 
 function animate() {
     requestAnimationFrame(animate);
+
+    if (mixer) {
+        const delta = clock.getDelta();
+        mixer.update(delta);
+    }
+
+
+    if (starField) {
+        starField.rotation.y -= 0.00008; // Rotate the starfield
+    }
+
     renderer.render(scene, camera);
 }
 
@@ -222,6 +285,17 @@ function updateInfoPanel(event) {
         <p>Latitude: ${event.lat.toFixed(4)}</p>
         <p>Longitude: ${event.lon.toFixed(4)}</p>
     `;
+}
+
+function toggleRotation() {
+    isRotating = !isRotating;
+}
+
+function setAnimationSpeed(speed) {
+    animationSpeed = speed;
+    if (mixer) {
+        mixer.timeScale = speed;
+    }
 }
 
 init();
