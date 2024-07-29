@@ -1,0 +1,23 @@
+# Ignore models
+models/
+
+# Ignore textures
+textures/
+
+# If you have specific file types for models and textures, you can also use:
+*.gltf
+*.glb
+*.obj
+*.fbx
+*.dae
+*.3ds
+*.png
+*.jpg
+*.jpeg
+*.tga
+*.bmp
+*.tif
+*.tiff
+
+node_modules/
+dist/
