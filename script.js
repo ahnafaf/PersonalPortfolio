@@ -24,6 +24,10 @@ let manualRotationY = 0;
 let rotationSpeed = 0.001; // Adjust this value to change rotation speed
 let isRotating = true;
 
+let isZoomedIn = false;
+let earthOriginalPosition = new THREE.Vector3(0, 0, 0);
+
+
 function init() {
     console.log("Initializing...");
 
@@ -199,52 +203,65 @@ function updateDebugPanel() {
 function positionEarthToEvent(event, animate = true) {
     if (!earthMesh) return;
 
-    isRotating = false; // Stop the rotation
+    isRotating = false;
 
     const targetRotationX = THREE.MathUtils.degToRad(event.lat);
     const targetRotationY = -THREE.MathUtils.degToRad(event.lon);
 
     if (animate) {
-        gsap.to(earthMesh.rotation, {
-            x: targetRotationX,
-            y: targetRotationY,
-            duration: 1.5,
-            ease: "power2.inOut",
-            onComplete: () => {
-                console.log(`Arrived at ${event.name}`);
-                updateInfoPanel(event);
-                manualRotationX = targetRotationX;
-                manualRotationY = targetRotationY;
-                updateDebugPanel();
-                isRotating = true; // Resume rotation after arriving at the event
-            }
-        });
+        if (!isZoomedIn) {
+            zoomInToCountry(event, targetRotationX, targetRotationY);
+        } else {
+            zoomOutFromCountry(() => {
+                rotateToCountry(event, targetRotationX, targetRotationY, () => {
+                    zoomInToCountry(event, targetRotationX, targetRotationY);
+                });
+            });
+        }
     } else {
         earthMesh.rotation.x = targetRotationX;
         earthMesh.rotation.y = targetRotationY;
         manualRotationX = targetRotationX;
         manualRotationY = targetRotationY;
         updateDebugPanel();
-        isRotating = true; // Resume rotation immediately for non-animated positioning
+        isRotating = true;
     }
 }
+
+let scrolling = false;
+let scrollTimeout;
+let scrollDirection = 0; // 0: No scroll, 1: Scrolling down, -1: Scrolling up
 
 function onScroll(event) {
     event.preventDefault();
 
-    if (event.ctrlKey || event.metaKey) {
-        let zoomDelta = event.deltaY * 0.0005;
-        currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom + zoomDelta));
-        animateZoom(currentZoom);
+    if (scrolling) return;
+
+    scrolling = true;
+    clearTimeout(scrollTimeout);
+
+    // Determine scroll direction
+    if (event.deltaY > 0) {
+        scrollDirection = 1; // Scrolling down
     } else {
-        if (event.deltaY > 0) {
-            currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
-        } else {
-            currentEventIndex = (currentEventIndex - 1 + lifeEvents.length) % lifeEvents.length;
-        }
-        positionEarthToEvent(lifeEvents[currentEventIndex]);
+        scrollDirection = -1; // Scrolling up
     }
+
+    if (scrollDirection === 1) {
+        currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
+    } else {
+        // To prevent scrolling up initially, you can add your desired behavior here
+        // For example, you can keep the current index if scrolling up is detected
+    }
+
+    positionEarthToEvent(lifeEvents[currentEventIndex]);
+
+    scrollTimeout = setTimeout(() => {
+        scrolling = false;
+        scrollDirection = 0;
+    }, 1000); // Adjust the delay as needed
 }
+
 
 function animateZoom(targetZoom) {
     gsap.to(camera.position, {
@@ -285,7 +302,16 @@ function updateInfoPanel(event) {
         <p>Latitude: ${event.lat.toFixed(4)}</p>
         <p>Longitude: ${event.lon.toFixed(4)}</p>
     `;
+
+    if (isZoomedIn) {
+        infoPanel.style.right = '10px';
+        infoPanel.style.left = 'auto';
+    } else {
+        infoPanel.style.left = '10px';
+        infoPanel.style.right = 'auto';
+    }
 }
+
 
 function toggleRotation() {
     isRotating = !isRotating;
@@ -297,6 +323,65 @@ function setAnimationSpeed(speed) {
         mixer.timeScale = speed;
     }
 }
+
+function zoomInToCountry(event, targetRotationX, targetRotationY) {
+    gsap.to(camera.position, {
+        z: 2,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+            panEarthToLeft();
+            isZoomedIn = true;
+            updateInfoPanel(event);
+        }
+    });
+
+    gsap.to(earthMesh.rotation, {
+        x: targetRotationX,
+        y: targetRotationY,
+        duration: 1.5,
+        ease: "power2.inOut"
+    });
+}
+
+function zoomOutFromCountry(callback) {
+    gsap.to(camera.position, {
+        z: currentZoom,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+            isZoomedIn = false;
+            if (callback) callback();
+        }
+    });
+
+    gsap.to(earthMesh.position, {
+        x: earthOriginalPosition.x,
+        duration: 1.5,
+        ease: "power2.inOut"
+    });
+}
+
+function rotateToCountry(event, targetRotationX, targetRotationY, callback) {
+    gsap.to(earthMesh.rotation, {
+        x: targetRotationX,
+        y: targetRotationY,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+            if (callback) callback();
+        }
+    });
+}
+
+function panEarthToLeft() {
+    gsap.to(earthMesh.position, {
+        x: -1,
+        duration: 1,
+        ease: "power2.inOut"
+    });
+}
+
 
 init();
 animate();
