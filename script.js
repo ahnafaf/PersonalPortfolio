@@ -1,10 +1,10 @@
 let scene, camera, renderer, earthMesh;
-let debugMode = true; // Set this to true for coordinate debugging
-let mixer;
-let clock;
-let animationSpeed = 0.2; // 0.5 means half speed, adjust as needed
+let mixer, clock;
 let starField;
 const starCount = 12000;
+const MIN_ZOOM_FACTOR = 0.5;  // Minimum zoom (furthest out)
+const MAX_ZOOM_FACTOR = 2;    // Maximum zoom (closest in)
+const ZOOM_SPEED = 0.1;       // How fast we zoom
 
 const lifeEvents = [
     { name: 'Dhaka, Bangladesh', lat: 15.0906, lon: 192.3428, age: '0', description: 'Born in Bangladesh' },
@@ -14,34 +14,41 @@ const lifeEvents = [
 ];
 
 let currentEventIndex = 0;
-let minZoom = 1.2;
-let maxZoom = 3;
-let currentZoom = 1.5;
+let defaultZoom, zoomedOutZoom;
+let animationSpeed = 0.25; // Default speed, adjust as needed
+let isZoomedOut = false;
+let isPanning = false;
 
-let manualRotationX = 0;
-let manualRotationY = 0;
+function isMobile() {
+    return window.innerWidth <= 768; // You can adjust this breakpoint as needed
+}
 
-let rotationSpeed = 0.001; // Adjust this value to change rotation speed
-let isRotating = true;
+function calculateZoomLevels() {
+    const aspect = window.innerWidth / window.innerHeight;
+    const baseZoom = Math.max(2, 3 - aspect);  // Increase base zoom
+    defaultZoom = baseZoom;
+    zoomedOutZoom = baseZoom * 1.5;  // Adjust this multiplier as needed
 
-let isZoomedIn = false;
-let earthOriginalPosition = new THREE.Vector3(0, 0, 0);
-
+    if (isMobile()) {
+        defaultZoom *= 1.2;  // Slightly more zoom for mobile
+        zoomedOutZoom *= 1.2;
+    }
+}
 
 function init() {
-    console.log("Initializing...");
-
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);  // Set background to black
+    scene.background = new THREE.Color(0x000000);
+    
+    calculateZoomLevels();
+    
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 0, currentZoom);
+    camera.position.set(0, 0, defaultZoom);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-
+    
     createStarField();
-
     clock = new THREE.Clock();
 
     const loader = new THREE.GLTFLoader();
@@ -50,44 +57,43 @@ function init() {
         function (gltf) {
             earthMesh = gltf.scene;
             earthMesh.scale.set(0.4, 0.4, 0.4);
-            
             scene.add(earthMesh);
-            positionEarthToEvent(lifeEvents[currentEventIndex], false);
+            positionEarthToEvent(lifeEvents[currentEventIndex]);
             updateInfoPanel(lifeEvents[currentEventIndex]);
 
-            // Set up animation
             mixer = new THREE.AnimationMixer(earthMesh);
             gltf.animations.forEach((clip) => {
                 const action = mixer.clipAction(clip);
                 action.setEffectiveTimeScale(animationSpeed);
                 action.play();
             });
-
-            console.log("Animations:", gltf.animations);
         },
-        function (xhr) {
-            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-        },
+        undefined,
         function (error) {
             console.error('An error happened', error);
         }
     );
 
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 3, 5);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x333333));
+    setupLighting();
 
     window.addEventListener('resize', onWindowResize, false);
     window.addEventListener('wheel', onScroll, { passive: false });
+}
 
-    if (debugMode) {
-        setupDebugControls();
-    }
+function setupLighting() {
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+    sunLight.position.set(5, 3, 5);
+    scene.add(sunLight);
 
-    setupDraggable();
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
 
-    console.log("Initialization complete");
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.5);
+    scene.add(hemisphereLight);
+
+    const softLight = new THREE.PointLight(0x404040, 0.5);
+    softLight.position.set(-5, -3, -5);
+    scene.add(softLight);
 }
 
 function createStarField() {
@@ -95,203 +101,90 @@ function createStarField() {
     const vertices = [];
 
     for (let i = 0; i < starCount; i++) {
-        const x = Math.random() * 2000 - 1000;
-        const y = Math.random() * 2000 - 1000;
-        const z = Math.random() * 2000 - 1000;
-        vertices.push(x, y, z);
+        vertices.push(Math.random() * 2000 - 1000, Math.random() * 2000 - 1000, Math.random() * 2000 - 1000);
     }
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-    const material = new THREE.PointsMaterial({
-        color: 0xFFFFFF,
-        size: 2,
-        sizeAttenuation: true
-    });
-
+    const material = new THREE.PointsMaterial({ color: 0xFFFFFF, size: 2, sizeAttenuation: true });
     starField = new THREE.Points(geometry, material);
     scene.add(starField);
 }
 
-function setupDebugControls() {
-    window.addEventListener('keydown', onKeyDown);
-    updateDebugPanel();
-}
-
-function setupDraggable() {
-    interact('.draggable').draggable({
-        inertia: true,
-        modifiers: [
-            interact.modifiers.restrictRect({
-                restriction: 'parent',
-                endOnly: true
-            })
-        ],
-        autoScroll: true,
-        listeners: {
-            move: dragMoveListener,
-        }
-    });
-}
-
-function dragMoveListener(event) {
-    var target = event.target;
-    var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-    var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-    target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
-}
-
-function onKeyDown(event) {
-    const rotationStep = 0.01;
-    switch(event.key) {
-        case 'ArrowUp':
-            manualRotationX -= rotationStep;
-            break;
-        case 'ArrowDown':
-            manualRotationX += rotationStep;
-            break;
-        case 'ArrowLeft':
-            manualRotationY -= rotationStep;
-            break;
-        case 'ArrowRight':
-            manualRotationY += rotationStep;
-            break;
-        case 's':
-            saveCurrentRotation();
-            break;
-    }
-    updateEarthRotation();
-    updateDebugPanel();
-}
-
-function updateEarthRotation() {
-    if (earthMesh) {
-        earthMesh.rotation.x = manualRotationX;
-        earthMesh.rotation.y = manualRotationY;
-    }
-}
-
-function saveCurrentRotation() {
-    const event = lifeEvents[currentEventIndex];
-    event.lat = THREE.MathUtils.radToDeg(manualRotationX);
-    event.lon = -THREE.MathUtils.radToDeg(manualRotationY);
-    console.log(`Saved coordinates for ${event.name}: lat ${event.lat}, lon ${event.lon}`);
-    updateDebugPanel();
-}
-
-function updateDebugPanel() {
-    const debugPanel = document.getElementById('debugPanel');
-    if (debugPanel) {
-        const currentEvent = lifeEvents[currentEventIndex];
-        debugPanel.innerHTML = `
-            <h3>Debug Info</h3>
-            <p>Current Event: ${currentEvent.name}</p>
-            <p>Age: ${currentEvent.age}</p>
-            <p>Rotation X: ${manualRotationX.toFixed(4)}</p>
-            <p>Rotation Y: ${manualRotationY.toFixed(4)}</p>
-            <p>Saved Lat: ${currentEvent.lat.toFixed(4)}</p>
-            <p>Saved Lon: ${currentEvent.lon.toFixed(4)}</p>
-            <p>Use arrow keys to rotate. Press 'S' to save coordinates.</p>
-        `;
-    }
-}
-
-function positionEarthToEvent(event, animate = true) {
+function positionEarthToEvent(event) {
     if (!earthMesh) return;
+    earthMesh.rotation.x = THREE.MathUtils.degToRad(event.lat);
+    earthMesh.rotation.y = -THREE.MathUtils.degToRad(event.lon);
 
-    isRotating = false;
-
-    const targetRotationX = THREE.MathUtils.degToRad(event.lat);
-    const targetRotationY = -THREE.MathUtils.degToRad(event.lon);
-
-    if (animate) {
-        if (!isZoomedIn) {
-            zoomInToCountry(event, targetRotationX, targetRotationY);
-        } else {
-            zoomOutFromCountry(() => {
-                rotateToCountry(event, targetRotationX, targetRotationY, () => {
-                    zoomInToCountry(event, targetRotationX, targetRotationY);
-                });
-            });
-        }
+    const aspect = window.innerWidth / window.innerHeight;
+    if (aspect < 1) {  // For portrait and square-ish windows
+        earthMesh.position.y = 0; // Start centered vertically
     } else {
-        earthMesh.rotation.x = targetRotationX;
-        earthMesh.rotation.y = targetRotationY;
-        manualRotationX = targetRotationX;
-        manualRotationY = targetRotationY;
-        updateDebugPanel();
-        isRotating = true;
+        earthMesh.position.y = 0;
     }
 }
-
-let scrolling = false;
-let scrollTimeout;
-let scrollDirection = 0; // 0: No scroll, 1: Scrolling down, -1: Scrolling up
 
 function onScroll(event) {
     event.preventDefault();
+    if (isPanning) return;
+    isPanning = true;
 
-    if (scrolling) return;
-
-    scrolling = true;
-    clearTimeout(scrollTimeout);
-
-    // Determine scroll direction
-    if (event.deltaY > 0) {
-        scrollDirection = 1; // Scrolling down
+    if (!isZoomedOut) {
+        zoomOutAndPan();
     } else {
-        scrollDirection = -1; // Scrolling up
+        zoomInAndRotate();
     }
 
-    if (scrollDirection === 1) {
-        currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
-    } else {
-        // To prevent scrolling up initially, you can add your desired behavior here
-        // For example, you can keep the current index if scrolling up is detected
-    }
-
-    positionEarthToEvent(lifeEvents[currentEventIndex]);
-
-    scrollTimeout = setTimeout(() => {
-        scrolling = false;
-        scrollDirection = 0;
-    }, 1000); // Adjust the delay as needed
+    setTimeout(() => { isPanning = false; }, 1500);
 }
 
-
-function animateZoom(targetZoom) {
-    gsap.to(camera.position, {
-        z: targetZoom,
-        duration: 0.5,
-        ease: "power2.out"
+function zoomOutAndPan() {
+    const aspect = window.innerWidth / window.innerHeight;
+    const isMobile = aspect < 1;
+    const yOffset = isMobile ? -1 : 0; // Vertical offset for mobile
+    const xOffset = isMobile ? 0 : -1.0; // Horizontal offset for desktop
+    
+    gsap.to(camera.position, { 
+        z: zoomedOutZoom, 
+        duration: 1.5, 
+        ease: "power2.inOut" 
+    });
+    gsap.to(earthMesh.position, {
+        x: xOffset,
+        y: yOffset,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => { isZoomedOut = true; }
     });
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+
+function zoomInAndRotate() {
+    currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
+    const nextEvent = lifeEvents[currentEventIndex];
+
+    gsap.to(camera.position, { 
+        z: defaultZoom, 
+        duration: 1.5, 
+        ease: "power2.inOut" 
+    });
+    gsap.to(earthMesh.position, { 
+        x: 0, 
+        y: 0, 
+        duration: 1.5, 
+        ease: "power2.inOut" 
+    });
+    gsap.to(earthMesh.rotation, {
+        x: THREE.MathUtils.degToRad(nextEvent.lat),
+        y: -THREE.MathUtils.degToRad(nextEvent.lon),
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+            isZoomedOut = false;
+            updateInfoPanel(nextEvent);
+        }
+    });
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-
-    if (mixer) {
-        const delta = clock.getDelta();
-        mixer.update(delta);
-    }
-
-
-    if (starField) {
-        starField.rotation.y -= 0.00008; // Rotate the starfield
-    }
-
-    renderer.render(scene, camera);
-}
 
 function updateInfoPanel(event) {
     const infoPanel = document.getElementById('info');
@@ -299,22 +192,27 @@ function updateInfoPanel(event) {
         <h2>${event.name}</h2>
         <p>Age: ${event.age}</p>
         <p>${event.description}</p>
-        <p>Latitude: ${event.lat.toFixed(4)}</p>
-        <p>Longitude: ${event.lon.toFixed(4)}</p>
     `;
-
-    if (isZoomedIn) {
-        infoPanel.style.right = '10px';
-        infoPanel.style.left = 'auto';
-    } else {
-        infoPanel.style.left = '10px';
-        infoPanel.style.right = 'auto';
-    }
 }
 
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-function toggleRotation() {
-    isRotating = !isRotating;
+    calculateZoomLevels();
+
+    camera.position.z = defaultZoom;
+
+    // Reset to current event position
+    if (earthMesh) positionEarthToEvent(lifeEvents[currentEventIndex]);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    if (mixer) mixer.update(clock.getDelta());
+    if (starField) starField.rotation.y -= 0.00008;
+    renderer.render(scene, camera);
 }
 
 function setAnimationSpeed(speed) {
@@ -324,66 +222,5 @@ function setAnimationSpeed(speed) {
     }
 }
 
-function zoomInToCountry(event, targetRotationX, targetRotationY) {
-    gsap.to(camera.position, {
-        z: 2,
-        duration: 1.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-            panEarthToLeft();
-            isZoomedIn = true;
-            updateInfoPanel(event);
-        }
-    });
-
-    gsap.to(earthMesh.rotation, {
-        x: targetRotationX,
-        y: targetRotationY,
-        duration: 1.5,
-        ease: "power2.inOut"
-    });
-}
-
-function zoomOutFromCountry(callback) {
-    gsap.to(camera.position, {
-        z: currentZoom,
-        duration: 1.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-            isZoomedIn = false;
-            if (callback) callback();
-        }
-    });
-
-    gsap.to(earthMesh.position, {
-        x: earthOriginalPosition.x,
-        duration: 1.5,
-        ease: "power2.inOut"
-    });
-}
-
-function rotateToCountry(event, targetRotationX, targetRotationY, callback) {
-    gsap.to(earthMesh.rotation, {
-        x: targetRotationX,
-        y: targetRotationY,
-        duration: 1.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-            if (callback) callback();
-        }
-    });
-}
-
-function panEarthToLeft() {
-    gsap.to(earthMesh.position, {
-        x: -1,
-        duration: 1,
-        ease: "power2.inOut"
-    });
-}
-
-
 init();
 animate();
-
-console.log("Script execution completed");
