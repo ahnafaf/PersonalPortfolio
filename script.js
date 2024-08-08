@@ -14,9 +14,9 @@ const lifeEvents = [
 ];
 
 let currentEventIndex = 0;
-let defaultZoom, zoomedOutZoom;
+let defaultZoom, zoomedInZoom;
 let animationSpeed = 0.25; // Default speed, adjust as needed
-let isZoomedOut = false;
+let isZoomedIn = false;
 let isPanning = false;
 
 function isMobile() {
@@ -25,16 +25,15 @@ function isMobile() {
 
 function calculateZoomLevels() {
     const aspect = window.innerWidth / window.innerHeight;
-    const baseZoom = Math.max(2, 3 - aspect);  // Increase base zoom
+    const baseZoom = Math.max(2, 3 - aspect);
     defaultZoom = baseZoom;
-    zoomedOutZoom = baseZoom * 1.5;  // Adjust this multiplier as needed
+    zoomedInZoom = baseZoom * 0.6;  // Closer zoom
 
     if (isMobile()) {
-        defaultZoom *= 1.2;  // Slightly more zoom for mobile
-        zoomedOutZoom *= 1.2;
+        defaultZoom *= 1.2;
+        zoomedInZoom *= 1.2;
     }
 }
-
 function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -128,24 +127,24 @@ function onScroll(event) {
     if (isPanning) return;
     isPanning = true;
 
-    if (!isZoomedOut) {
-        zoomOutAndPan();
+    if (!isZoomedIn) {
+        zoomInAndPan();
     } else {
-        zoomInAndRotate();
+        zoomOutAndRotate();
     }
 
     setTimeout(() => { isPanning = false; }, 1500);
 }
 
-function zoomOutAndPan() {
+function zoomInAndPan() {
     const aspect = window.innerWidth / window.innerHeight;
     const isMobile = aspect < 1;
-    const yOffset = isMobile ? -1 : 0; // Vertical offset for mobile
-    const xOffset = isMobile ? 0 : -1.0; // Horizontal offset for desktop
+    const yOffset = isMobile ? -0.5 : 0; // Vertical offset for mobile
+    const xOffset = isMobile ? 0 : -0.25; // Horizontal offset for desktop
     
     gsap.to(camera.position, { 
-        z: zoomedOutZoom, 
-        duration: 1.5, 
+        z: zoomedInZoom, 
+        duration: 3.3, 
         ease: "power2.inOut" 
     });
     gsap.to(earthMesh.position, {
@@ -153,12 +152,11 @@ function zoomOutAndPan() {
         y: yOffset,
         duration: 1.5,
         ease: "power2.inOut",
-        onComplete: () => { isZoomedOut = true; }
+        onComplete: () => { isZoomedIn = true; }
     });
 }
 
-
-function zoomInAndRotate() {
+function zoomOutAndRotate() {
     currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
     const nextEvent = lifeEvents[currentEventIndex];
 
@@ -179,7 +177,7 @@ function zoomInAndRotate() {
         duration: 1.5,
         ease: "power2.inOut",
         onComplete: () => {
-            isZoomedOut = false;
+            isZoomedIn = false;
             updateInfoPanel(nextEvent);
         }
     });
