@@ -139,8 +139,8 @@ function onScroll(event) {
 function zoomInAndPan() {
     const aspect = window.innerWidth / window.innerHeight;
     const isMobile = aspect < 1;
-    const yOffset = isMobile ? -0.5 : 0; // Vertical offset for mobile
-    const xOffset = isMobile ? 0 : -0.25; // Horizontal offset for desktop
+    const yOffset = isMobile ? -0.5 : 0;
+    const xOffset = isMobile ? 0 : -0.25;
     
     gsap.to(camera.position, { 
         z: zoomedInZoom, 
@@ -152,7 +152,10 @@ function zoomInAndPan() {
         y: yOffset,
         duration: 1.5,
         ease: "power2.inOut",
-        onComplete: () => { isZoomedIn = true; }
+        onComplete: () => { 
+            isZoomedIn = true;
+            showInfoPanel();
+        }
     });
 }
 
@@ -178,6 +181,7 @@ function zoomOutAndRotate() {
         ease: "power2.inOut",
         onComplete: () => {
             isZoomedIn = false;
+            hideInfoPanel();
             updateInfoPanel(nextEvent);
         }
     });
@@ -185,13 +189,14 @@ function zoomOutAndRotate() {
 
 
 function updateInfoPanel(event) {
-    const infoPanel = document.getElementById('info');
-    infoPanel.innerHTML = `
+    const textArea = document.getElementById('textArea');
+    textArea.innerHTML = `
         <h2>${event.name}</h2>
         <p>Age: ${event.age}</p>
         <p>${event.description}</p>
     `;
 }
+
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -219,6 +224,25 @@ function setAnimationSpeed(speed) {
         mixer.timeScale = speed;
     }
 }
+
+function showInfoPanel() {
+    const textArea = document.getElementById('textArea');
+    if (isMobile()) {
+        textArea.style.transform = 'translateY(0)';
+    } else {
+        textArea.style.transform = 'translateX(0)';
+    }
+}
+
+function hideInfoPanel() {
+    const textArea = document.getElementById('textArea');
+    if (isMobile()) {
+        textArea.style.transform = 'translateY(100%)';
+    } else {
+        textArea.style.transform = 'translateX(100%)';
+    }
+}
+
 
 init();
 animate();

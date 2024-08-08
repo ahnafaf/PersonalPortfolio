@@ -1,20 +1,28 @@
 body { 
     margin: 0; 
-    background-color: #f0f0f0;
+    background-color: #000;
     font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 
 canvas { 
     display: block; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
 #info, #debugPanel {
-    position: absolute;
+    position: fixed;
     color: white;
     background-color: rgba(0,0,0,0.7);
     padding: 10px;
     touch-action: none;
     user-select: none;
+    z-index: 3;
 }
 
 #info {
@@ -64,48 +72,31 @@ canvas {
     transform: scale(1.1);
 }
 
-#spaceDriveAnimation {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 999;
-    display: none;
-}
-
-#mainContent {
-    display: none;
-}
-
 #textArea {
     position: fixed;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 100%;
-    background-color: rgba(40, 40, 40, 0.9); /* Dark shade of grey */
+    background-color: rgba(0,0,0,0.7);
     color: white;
     padding: 20px;
     font-family: Arial, sans-serif;
     overflow-y: auto;
-    transform: translateX(100%);
     transition: transform 0.5s ease-out;
-    z-index: 1000;
+}
+@media (min-width: 769px) {
+    #textArea {
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 100%;
+        transform: translateX(100%);
+    }
+}
+@media (max-width: 768px) {
+    #textArea {
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        transform: translateY(100%);
+    }
 }
 
-#textArea.visible {
-    transform: translateX(0);
-}
-
-#textArea textarea {
-    width: 100%;
-    height: 80%;
-    background-color: rgba(60, 60, 60, 0.5);
-    color: white;
-    border: none;
-    padding: 10px;
-    font-family: inherit;
-    resize: vertical;
-}
