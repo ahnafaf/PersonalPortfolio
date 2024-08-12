@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Earth Model</title>
     <style>
-        
         body { 
             margin: 0; 
             background-color: #f0f0f0;
@@ -58,12 +57,33 @@
                 transform: translateY(100%);
             }
         }
-
     </style>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
+    <nav id="top-bar">
+        <div class="logo">Ahnaf Ahsan</div>
+        <div class="menu-toggle" id="mobile-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-container">
+            <ul class="nav-list">
+                <li><a href="#about"><i class="fas fa-user"></i> About</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
+                <li><a href="#projects"><i class="fas fa-briefcase"></i> Projects</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="interaction-cue">
+        <i class="fas fa-info-circle"></i>
+        <span class="cue-text">Swipe to explore</span>
+    </div>
     <div id="info" class="draggable"></div>
-    <div id="debugPanel" class="draggable"></div>
     <div id="textArea"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
