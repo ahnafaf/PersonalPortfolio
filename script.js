@@ -1,5 +1,3 @@
-
-
 let scene, camera, renderer, earthMesh;
 let mixer, clock;
 let starField;
@@ -44,7 +42,6 @@ const lifeEvents = [
         description: "At 20, I made the bold move to Manitoba, Canada, to pursue a Computer Science degree at the University of Manitoba. The adjustment from the desert climate of Dubai to the harsh Canadian winters was challenging but exhilarating. Over the past two years, I've immersed myself in a new culture, joined various student groups, and built a diverse network of friends from around the world. The Canadian emphasis on multiculturalism has allowed me to embrace my background while integrating into a new society. My journey in tech has been both challenging and rewarding, opening doors to innovative projects and potential career paths I never imagined."
     }
 ];
-
 
 function isMobile() {
     return window.innerWidth <= 768;
@@ -94,8 +91,15 @@ function init() {
                 action.setEffectiveTimeScale(animationSpeed);
                 action.play();
             });
+
+            // Hide the loading screen once the model is loaded
+            document.getElementById('loadingScreen').style.display = 'none';
         },
-        undefined,
+        function (xhr) {
+            // Update the loading bar progress
+            const progress = (xhr.loaded / xhr.total) * 100;
+            document.getElementById('loadingBar').style.width = progress + '%';
+        },
         function (error) {
             console.error('An error happened', error);
         }
@@ -159,7 +163,6 @@ function positionEarthToEvent(event) {
     }
 }
 
-
 function handleInteraction(direction) {
     if (isPanning) return;
     isPanning = true;
@@ -176,7 +179,6 @@ function handleInteraction(direction) {
 
     setTimeout(() => { isPanning = false; }, 1500);
 }
-
 
 function zoomInAndPan() {
     const aspect = window.innerWidth / window.innerHeight;
@@ -222,6 +224,7 @@ function zoomOutAndRotate(direction) {
         duration: 1.5,
         ease: "power2.inOut",
         onComplete: () => {
+            isZoomedIn = false;
             isZoomedIn = false;
             hideInfoPanel();
             updateInfoPanel(nextEvent);
@@ -340,8 +343,16 @@ document.addEventListener('DOMContentLoaded', function() {
     mobileMenu.addEventListener('click', function() {
         navContainer.classList.toggle('active');
     });
+
+    // Update funny text every 2 seconds
+    setInterval(updateFunnyText, 2000);
 });
 
-  
+function updateFunnyText() {
+    const funnyTextElement = document.getElementById('funnyText');
+    const randomIndex = Math.floor(Math.random() * funnyTexts.length);
+    funnyTextElement.textContent = funnyTexts[randomIndex];
+}
+
 init();
 animate();
