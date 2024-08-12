@@ -1,39 +1,67 @@
+
+
 let scene, camera, renderer, earthMesh;
 let mixer, clock;
 let starField;
 const starCount = 12000;
-const MIN_ZOOM_FACTOR = 0.5;  // Minimum zoom (furthest out)
-const MAX_ZOOM_FACTOR = 2;    // Maximum zoom (closest in)
-const ZOOM_SPEED = 0.1;       // How fast we zoom
-
-const lifeEvents = [
-    { name: 'Dhaka, Bangladesh', lat: 15.0906, lon: 192.3428, age: '0', description: 'Born in Bangladesh' },
-    { name: 'Dubai, United Arab Emirates', lat: 19.4752, lon: 140.0686, age: '3 months old', description: 'Moved to Dubai at 3 months old, parents had started their lives in a small 1 bedroom apartment.' },
-    { name: 'New York, United States', lat: 34.9451, lon: 12.8719, age: 'Later', description: 'Flew out on a trip to America, this is when I realized that as much as I loved Dubai. \nI would want to be able to pursue my education in North America and learn more about its culture.' },
-    { name: 'Manitoba, Canada', lat: 39.5288, lon: -8.9005, age: 'Later', description: 'Swag' }
-];
+const MIN_ZOOM_FACTOR = 0.5;
+const MAX_ZOOM_FACTOR = 2;
+const ZOOM_SPEED = 0.1;
 
 let currentEventIndex = 0;
 let defaultZoom, zoomedInZoom;
-let animationSpeed = 0.25; // Default speed, adjust as needed
+let animationSpeed = 0.25;
 let isZoomedIn = false;
 let isPanning = false;
 
+const lifeEvents = [
+    {
+        name: 'Dhaka, Bangladesh',
+        lat: 15.0906,
+        lon: 192.3428,
+        age: '0',
+        description: "Born in Dhaka, the vibrant capital of Bangladesh. The city's bustling streets, colorful rickshaws, and the aroma of street food would have been my first sensory experiences. Though I was too young to remember, this diverse and lively city set the stage for my multicultural journey."
+    },
+    {
+        name: 'Dubai, United Arab Emirates',
+        lat: 19.4752,
+        lon: 140.0686,
+        age: '3 months old',
+        description: 'Moved to Dubai at just 3 months old. My parents, full of hope and ambition, started our new life in a modest 1-bedroom apartment. Growing up in this futuristic city, I witnessed its rapid transformation from desert to a global metropolis. The blend of traditional Arab culture with modern architecture and international influences shaped my early worldview.'
+    },
+    {
+        name: 'New York, United States',
+        lat: 34.9451,
+        lon: 12.8719,
+        age: '17',
+        description: 'At 17, I embarked on a life-changing trip to New York City. The energy of the Big Apple was intoxicating - from the towering skyscrapers to the diverse neighborhoods and the melting pot of cultures. This experience opened my eyes to new possibilities and ignited a desire to pursue education in North America. The stark contrast to Dubai made me appreciate both cultures and fueled my curiosity to learn more about Western education and lifestyle.'
+    },
+    {
+        name: 'Manitoba, Canada',
+        lat: 39.5288,
+        lon: -8.9005,
+        age: '20',
+        description: "At 20, I made the bold move to Manitoba, Canada, to pursue a Computer Science degree at the University of Manitoba. The adjustment from the desert climate of Dubai to the harsh Canadian winters was challenging but exhilarating. Over the past two years, I've immersed myself in a new culture, joined various student groups, and built a diverse network of friends from around the world. The Canadian emphasis on multiculturalism has allowed me to embrace my background while integrating into a new society. My journey in tech has been both challenging and rewarding, opening doors to innovative projects and potential career paths I never imagined."
+    }
+];
+
+
 function isMobile() {
-    return window.innerWidth <= 768; // You can adjust this breakpoint as needed
+    return window.innerWidth <= 768;
 }
 
 function calculateZoomLevels() {
     const aspect = window.innerWidth / window.innerHeight;
     const baseZoom = Math.max(2, 3 - aspect);
     defaultZoom = baseZoom;
-    zoomedInZoom = baseZoom * 0.6;  // Closer zoom
+    zoomedInZoom = baseZoom * 0.6;
 
     if (isMobile()) {
         defaultZoom *= 1.2;
         zoomedInZoom *= 1.2;
     }
 }
+
 function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -76,7 +104,16 @@ function init() {
     setupLighting();
 
     window.addEventListener('resize', onWindowResize, false);
-    window.addEventListener('wheel', onScroll, { passive: false });
+
+    if (isMobile()) {
+        document.addEventListener('touchstart', onTouchStart, false);
+        document.addEventListener('touchmove', onTouchMove, false);
+        document.addEventListener('touchend', onTouchEnd, false);
+    } else {
+        window.addEventListener('mousedown', onMouseDown, false);
+        window.addEventListener('mousemove', onMouseMove, false);
+        window.addEventListener('mouseup', onMouseUp, false);
+    }
 }
 
 function setupLighting() {
@@ -115,26 +152,31 @@ function positionEarthToEvent(event) {
     earthMesh.rotation.y = -THREE.MathUtils.degToRad(event.lon);
 
     const aspect = window.innerWidth / window.innerHeight;
-    if (aspect < 1) {  // For portrait and square-ish windows
-        earthMesh.position.y = 0; // Start centered vertically
+    if (aspect < 1) {
+        earthMesh.position.y = 0;
     } else {
         earthMesh.position.y = 0;
     }
 }
 
-function onScroll(event) {
-    event.preventDefault();
+
+function handleInteraction(direction) {
     if (isPanning) return;
     isPanning = true;
 
     if (!isZoomedIn) {
         zoomInAndPan();
     } else {
-        zoomOutAndRotate();
+        if (direction === 'right') {
+            zoomOutAndRotate(1);  // Move forward
+        } else if (direction === 'left') {
+            zoomOutAndRotate(-1);  // Move backward
+        }
     }
 
     setTimeout(() => { isPanning = false; }, 1500);
 }
+
 
 function zoomInAndPan() {
     const aspect = window.innerWidth / window.innerHeight;
@@ -159,8 +201,8 @@ function zoomInAndPan() {
     });
 }
 
-function zoomOutAndRotate() {
-    currentEventIndex = (currentEventIndex + 1) % lifeEvents.length;
+function zoomOutAndRotate(direction) {
+    currentEventIndex = (currentEventIndex + direction + lifeEvents.length) % lifeEvents.length;
     const nextEvent = lifeEvents[currentEventIndex];
 
     gsap.to(camera.position, { 
@@ -187,7 +229,6 @@ function zoomOutAndRotate() {
     });
 }
 
-
 function updateInfoPanel(event) {
     const textArea = document.getElementById('textArea');
     textArea.innerHTML = `
@@ -196,7 +237,6 @@ function updateInfoPanel(event) {
         <p>${event.description}</p>
     `;
 }
-
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -207,7 +247,6 @@ function onWindowResize() {
 
     camera.position.z = defaultZoom;
 
-    // Reset to current event position
     if (earthMesh) positionEarthToEvent(lifeEvents[currentEventIndex]);
 }
 
@@ -243,6 +282,66 @@ function hideInfoPanel() {
     }
 }
 
+let touchStartX;
 
+function onTouchStart(event) {
+    touchStartX = event.touches[0].clientX;
+}
+
+function onTouchMove(event) {
+    if (isPanning) return;
+    event.preventDefault();
+}
+
+function onTouchEnd(event) {
+    if (isPanning) return;
+    
+    const touchEndX = event.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    
+    if (deltaX > 50) {
+        handleInteraction('right');
+    }
+}
+
+let mouseStartX;
+let isMouseDown = false;
+
+function onMouseDown(event) {
+    isMouseDown = true;
+    mouseStartX = event.clientX;
+}
+
+function onMouseMove(event) {
+    if (!isMouseDown || isPanning) return;
+}
+
+function onMouseUp(event) {
+    if (!isMouseDown || isPanning) return;
+    
+    const mouseEndX = event.clientX;
+    const deltaX = mouseEndX - mouseStartX;
+    
+    if (Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+            handleInteraction('right');
+        } else {
+            handleInteraction('left');
+        }
+    }
+
+    isMouseDown = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const navContainer = document.querySelector('.nav-container');
+
+    mobileMenu.addEventListener('click', function() {
+        navContainer.classList.toggle('active');
+    });
+});
+
+  
 init();
 animate();
