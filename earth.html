@@ -32,14 +32,60 @@
             </ul>
         </div>
     </nav>
-
+    
+    <div id="info" class="draggable"></div>
+    <div id="textArea"></div>
+    <div id="swipeText">Click on the left arrow to move forward in my life...</div>
     <div class="interaction-cue">
         <i class="fas fa-info-circle"></i>
         <span class="cue-text">Swipe to explore</span>
     </div>
-    <div id="info" class="draggable"></div>
-    <div id="textArea"></div>
     
+    <div class="controls">
+        <button id="left-arrow" class="arrow-button"><i class="fas fa-chevron-left"></i></button>
+        <button id="right-arrow" class="arrow-button"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- About Page -->
+    <div id="aboutPage" class="floating-window">
+        <div class="window-header">
+            <h2>About Me</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <p>Hello! I'm Ahnaf Ahsan, a passionate developer and innovator. I love creating solutions that make a difference in people's lives.</p>
+            <p>My expertise includes web development, data analysis, and machine learning. I'm always eager to learn new technologies and take on challenging projects.</p>
+        </div>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="contactPage" class="floating-window">
+        <div class="window-header">
+            <h2>Contact Me</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <form id="contactForm">
+                <input type="text" id="name" name="name" placeholder="Your Name" required>
+                <input type="email" id="email" name="email" placeholder="Your Email" required>
+                <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Projects Page -->
+    <div id="projectsPage" class="floating-window">
+        <div class="window-header">
+            <h2>My Projects</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <div id="projectGrid" class="project-grid">
+                <!-- Project cards will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>

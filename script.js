@@ -127,16 +127,6 @@ function init() {
     setupLighting();
 
     window.addEventListener('resize', onWindowResize, false);
-
-    if (isMobile()) {
-        document.addEventListener('touchstart', onTouchStart, false);
-        document.addEventListener('touchmove', onTouchMove, false);
-        document.addEventListener('touchend', onTouchEnd, false);
-    } else {
-        window.addEventListener('mousedown', onMouseDown, false);
-        window.addEventListener('mousemove', onMouseMove, false);
-        window.addEventListener('mouseup', onMouseUp, false);
-    }
 }
 
 function setupLighting() {
@@ -182,27 +172,11 @@ function positionEarthToEvent(event) {
     }
 }
 
-function handleInteraction(direction) {
-    if (isPanning) return;
-    isPanning = true;
-
-    if (!isZoomedIn) {
-        zoomInAndPan();
-    } else {
-        if (direction === 'right') {
-            zoomOutAndRotate(1);  // Move forward
-        } else if (direction === 'left') {
-            zoomOutAndRotate(-1);  // Move backward
-        }
-    }
-
-    setTimeout(() => { isPanning = false; }, 1500);
-}
 
 function zoomInAndPan() {
     const aspect = window.innerWidth / window.innerHeight;
     const isMobile = aspect < 1;
-    const yOffset = isMobile ? -0.5 : 0;
+    const yOffset = isMobile ? +0.3 : 0;
     const xOffset = isMobile ? 0 : -0.25;
     
     gsap.to(camera.position, { 
@@ -218,6 +192,9 @@ function zoomInAndPan() {
         onComplete: () => { 
             isZoomedIn = true;
             showInfoPanel();
+            if (isMobile) {
+                moveArrowsUp();
+            }
         }
     });
 }
@@ -225,11 +202,15 @@ function zoomInAndPan() {
 function zoomOutAndRotate(direction) {
     currentEventIndex = (currentEventIndex + direction + lifeEvents.length) % lifeEvents.length;
     const nextEvent = lifeEvents[currentEventIndex];
+    hideInfoPanel();
 
     gsap.to(camera.position, { 
         z: defaultZoom, 
         duration: 1.5, 
-        ease: "power2.inOut" 
+        ease: "power2.inOut",
+        onComplete: () => {
+            showSwipeText(); // Show the swipe text when zooming out
+        }
     });
     gsap.to(earthMesh.position, { 
         x: 0, 
@@ -244,11 +225,19 @@ function zoomOutAndRotate(direction) {
         ease: "power2.inOut",
         onComplete: () => {
             isZoomedIn = false;
-            hideInfoPanel();
-            updateInfoPanel(nextEvent);
+            // Add a delay before updating the info panel
+            gsap.delayedCall(0.5, () => { // Adjust the delay duration as needed
+                updateInfoPanel(nextEvent);
+            });
+            if (isMobile) {
+                moveArrowsDown();
+            }
         }
     });
 }
+
+
+
 
 function updateInfoPanel(event) {
     const textArea = document.getElementById('textArea');
@@ -286,20 +275,25 @@ function setAnimationSpeed(speed) {
 }
 
 function showInfoPanel() {
+    hideDesktopArrow();
+ 
     const textArea = document.getElementById('textArea');
     if (isMobile()) {
-        textArea.style.transform = 'translateY(0)';
+        gsap.to(textArea, { duration: 0.5, y: 0, ease: "power4.out" });
     } else {
-        textArea.style.transform = 'translateX(0)';
+        gsap.to(textArea, { duration: 0.5, x: 0, ease: "power4.out" });
     }
+    hideSwipeText(); // Hide the swipe text when the info panel is shown
 }
 
+
 function hideInfoPanel() {
+    showDesktopArrow();
     const textArea = document.getElementById('textArea');
     if (isMobile()) {
-        textArea.style.transform = 'translateY(100%)';
+        gsap.to(textArea, { duration: 0.5, y: '100%', ease: "power4.in" });
     } else {
-        textArea.style.transform = 'translateX(100%)';
+        gsap.to(textArea, { duration: 0.5, x: '100%', ease: "power4.in" });
     }
 }
 
@@ -374,11 +368,158 @@ const funnyTexts = [
     "Painting the deserts..."
 ];
 
+function showSwipeText() {
+    const swipeText = document.getElementById('swipeText');
+    swipeText.style.opacity = '1';
+}
+
+function hideSwipeText() {
+    const swipeText = document.getElementById('swipeText');
+    swipeText.style.opacity = '0';
+}
+
+
 function updateFunnyText() {
     const funnyTextElement = document.getElementById('funnyText');
     const randomIndex = Math.floor(Math.random() * funnyTexts.length);
     funnyTextElement.textContent = funnyTexts[randomIndex];
 }
+
+document.getElementById('left-arrow').addEventListener('click', function() {
+    // Implement logic to move Earth to the left
+    if (isPanning) return;
+    isPanning = true;
+
+    if (!isZoomedIn) {
+        zoomInAndPan();
+    } else {
+        zoomOutAndRotate(-1);  // Move backward
+    }
+    console.log('Left arrow clicked');
+    isPanning = false;  // Reset panning status
+});
+
+document.getElementById('right-arrow').addEventListener('click', function() {
+    // Implement logic to move Earth to the right
+    if (isPanning) return;
+    isPanning = true;
+
+    if (!isZoomedIn) {
+        zoomInAndPan();
+    } else {
+        zoomOutAndRotate(1);  // Move forward
+    }
+    console.log('Right arrow clicked');
+    isPanning = false;  // Reset panning status
+});
+
+// Function to move arrows up
+function moveArrowsUp() {
+    gsap.to('.controls', {
+        bottom: "70%", // Adjust this value as needed
+        duration: 1.5,
+        ease: "power2.out"
+    });
+}
+
+// Function to move arrows down
+function moveArrowsDown() {
+    gsap.to('.controls', {
+        bottom: '1%', // Adjust this value as needed
+        duration: 1.5,
+        ease: "power2.out"
+    });
+}
+
+function hideDesktopArrow() {
+    if (!isMobile) {
+        const rightArrow = document.getElementById('right-arrow');
+        swipeText.style.opacity = '0';    
+    }
+}
+
+function showDesktopArrow() {
+    if (!isMobile) {
+        const rightArrow = document.getElementById('right-arrow');
+        swipeText.style.opacity = '1';    
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const navLinks = document.querySelectorAll('.nav-list a');
+    const floatingWindows = document.querySelectorAll('.floating-window');
+    const closeBtns = document.querySelectorAll('.close-btn');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').slice(1);
+            const targetWindow = document.getElementById(targetId + 'Page');
+            if (targetWindow) {
+                targetWindow.style.display = 'block';
+                if (targetId === 'projects') {
+                    generateProjectCards();
+                }
+            }
+        });
+    });
+
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.closest('.floating-window').style.display = 'none';
+        });
+    });
+});
+
+
+
+const projects = [
+    {
+        name: "Dashcam Footage Analyzer",
+        desc: "A tool that analyzes dashcam footage for safety and insurance purposes.",
+        img_name: "dashcam-image.jpg"
+    },
+    {
+        name: "CData",
+        desc: "A comprehensive data management and analysis platform.",
+        img_name: "cdata-image.jpg"
+    },
+    {
+        name: "Last Stop",
+        desc: "An innovative public transportation app for efficient travel planning.",
+        img_name: "last-stop-image.jpg"
+    },
+    {
+        name: "GlobeNews",
+        desc: "A global news aggregator with personalized content delivery.",
+        img_name: "globenews-image.jpg"
+    },
+    {
+        name: "Job Fit",
+        desc: "An AI-powered job matching platform for job seekers and employers.",
+        img_name: "job-fit-image.jpg"
+    }
+];
+
+function generateProjectCards() {
+    const projectGrid = document.getElementById('projectGrid');
+    projectGrid.innerHTML = ''; // Clear existing content
+
+    projects.forEach(project => {
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.innerHTML = `
+            <div class="project-image" style="background-image: url('path/to/${project.img_name}');"></div>
+            <div class="project-info">
+                <h3>${project.name}</h3>
+                <p>${project.desc}</p>
+                <a href="#" class="project-link">Learn More</a>
+            </div>
+        `;
+        projectGrid.appendChild(card);
+    });
+}
+
 
 init();
 animate();
