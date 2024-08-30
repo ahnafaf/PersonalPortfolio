@@ -297,68 +297,9 @@ function hideInfoPanel() {
     }
 }
 
-let touchStartX;
 
-function onTouchStart(event) {
-    touchStartX = event.touches[0].clientX;
-}
 
-function onTouchMove(event) {
-    if (isPanning) return;
-    event.preventDefault();
-}
 
-function onTouchEnd(event) {
-    if (isPanning) return;
-    
-    const touchEndX = event.changedTouches[0].clientX;
-    const deltaX = touchEndX - touchStartX;
-    
-    if (deltaX > 50) {
-        handleInteraction('right');
-    }
-}
-
-let mouseStartX;
-let isMouseDown = false;
-
-function onMouseDown(event) {
-    isMouseDown = true;
-    mouseStartX = event.clientX;
-}
-
-function onMouseMove(event) {
-    if (!isMouseDown || isPanning) return;
-}
-
-function onMouseUp(event) {
-    if (!isMouseDown || isPanning) return;
-    
-    const mouseEndX = event.clientX;
-    const deltaX = mouseEndX - mouseStartX;
-    
-    if (Math.abs(deltaX) > 50) {
-        if (deltaX > 0) {
-            handleInteraction('right');
-        } else {
-            handleInteraction('left');
-        }
-    }
-
-    isMouseDown = false;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenu = document.getElementById('mobile-menu');
-    const navContainer = document.querySelector('.nav-container');
-
-    mobileMenu.addEventListener('click', function() {
-        navContainer.classList.toggle('active');
-    });
-
-    // Update funny text every 2 seconds
-    setInterval(updateFunnyText, 2000);
-});
 
 const funnyTexts = [
     "Filling up the oceans...",
@@ -385,33 +326,6 @@ function updateFunnyText() {
     funnyTextElement.textContent = funnyTexts[randomIndex];
 }
 
-document.getElementById('left-arrow').addEventListener('click', function() {
-    // Implement logic to move Earth to the left
-    if (isPanning) return;
-    isPanning = true;
-
-    if (!isZoomedIn) {
-        zoomInAndPan();
-    } else {
-        zoomOutAndRotate(-1);  // Move backward
-    }
-    console.log('Left arrow clicked');
-    isPanning = false;  // Reset panning status
-});
-
-document.getElementById('right-arrow').addEventListener('click', function() {
-    // Implement logic to move Earth to the right
-    if (isPanning) return;
-    isPanning = true;
-
-    if (!isZoomedIn) {
-        zoomInAndPan();
-    } else {
-        zoomOutAndRotate(1);  // Move forward
-    }
-    console.log('Right arrow clicked');
-    isPanning = false;  // Reset panning status
-});
 
 // Function to move arrows up
 function moveArrowsUp() {
@@ -445,6 +359,8 @@ function showDesktopArrow() {
     }
 }
 
+// Event listeners for your navigation buttons and other shit
+
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-list a');
     const floatingWindows = document.querySelectorAll('.floating-window');
@@ -457,9 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetWindow = document.getElementById(targetId + 'Page');
             if (targetWindow) {
                 targetWindow.style.display = 'block';
-                if (targetId === 'projects') {
-                    generateProjectCards();
-                }
+                // Removed the generateProjectCards() call from here
             }
         });
     });
@@ -471,54 +385,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
-
-const projects = [
-    {
-        name: "Dashcam Footage Analyzer",
-        desc: "A tool that analyzes dashcam footage for safety and insurance purposes.",
-        img_name: "dashcam-image.jpg"
-    },
-    {
-        name: "CData",
-        desc: "A comprehensive data management and analysis platform.",
-        img_name: "cdata-image.jpg"
-    },
-    {
-        name: "Last Stop",
-        desc: "An innovative public transportation app for efficient travel planning.",
-        img_name: "last-stop-image.jpg"
-    },
-    {
-        name: "GlobeNews",
-        desc: "A global news aggregator with personalized content delivery.",
-        img_name: "globenews-image.jpg"
-    },
-    {
-        name: "Job Fit",
-        desc: "An AI-powered job matching platform for job seekers and employers.",
-        img_name: "job-fit-image.jpg"
+function openWindow(windowId) {
+    // If there's a window already open, close it
+    if (currentOpenWindow) {
+        document.getElementById(currentOpenWindow).style.display = 'none';
     }
-];
 
-function generateProjectCards() {
-    const projectGrid = document.getElementById('projectGrid');
-    projectGrid.innerHTML = ''; // Clear existing content
+    // Open the new window
+    const windowToOpen = document.getElementById(windowId);
+    windowToOpen.style.display = 'block';
 
-    projects.forEach(project => {
-        const card = document.createElement('div');
-        card.className = 'project-card';
-        card.innerHTML = `
-            <div class="project-image" style="background-image: url('path/to/${project.img_name}');"></div>
-            <div class="project-info">
-                <h3>${project.name}</h3>
-                <p>${project.desc}</p>
-                <a href="#" class="project-link">Learn More</a>
-            </div>
-        `;
-        projectGrid.appendChild(card);
-    });
+    // Update the reference to the currently open window
+    currentOpenWindow = windowId;
 }
+
+function closeWindow() {
+    if (currentOpenWindow) {
+        document.getElementById(currentOpenWindow).style.display = 'none';
+        currentOpenWindow = null;
+    }
+}
+
+let currentOpenWindow = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const navContainer = document.querySelector('.nav-container');
+
+    mobileMenu.addEventListener('click', function() {
+        navContainer.classList.toggle('active');
+    });
+
+    // Update funny text every 2 seconds
+    setInterval(updateFunnyText, 2000);
+});
+
+document.getElementById('left-arrow').addEventListener('click', function() {
+    if (isPanning) return;
+    isPanning = true;
+
+    if (!isZoomedIn) {
+        zoomInAndPan();
+    } else {
+        zoomOutAndRotate(-1);  // Move backward
+    }
+    console.log('Left arrow clicked');
+    isPanning = false;  // Reset panning status
+});
+
+document.getElementById('right-arrow').addEventListener('click', function() {
+    if (isPanning) return;
+    isPanning = true;
+
+    if (!isZoomedIn) {
+        zoomInAndPan();
+    } else {
+        zoomOutAndRotate(1);  // Move forward
+    }
+    console.log('Right arrow clicked');
+    isPanning = false;  // Reset panning status
+});
+
+
+
+function openWindow(windowId) {
+    // Hide all windows first
+    document.querySelectorAll('.floating-window').forEach(window => {
+        window.style.display = 'none';
+    });
+
+    // Show the selected window
+    const windowToOpen = document.getElementById(windowId);
+    if (windowToOpen) {
+        windowToOpen.style.display = 'block';
+    }
+}
+
+
+function closeWindow(windowId) {
+    const windowToClose = document.getElementById(windowId);
+    if (windowToClose) {
+        windowToClose.style.display = 'none';
+    }
+    currentOpenWindow = null;
+}
+
 
 
 init();

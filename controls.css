@@ -1,0 +1,54 @@
+.controls {
+    position: fixed;
+    bottom: 1%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.arrow-button {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    padding: 15px;
+    font-size: 40px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.arrow-button:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+.arrow-button i {
+    pointer-events: none;
+}
+
+#left-arrow {
+    margin-left: 20px;
+}
+
+#right-arrow {
+    margin-right: 20px;
+}
+
+@media (max-width: 768px) {
+    .arrow-button {
+        padding: 10px;
+        font-size: 30px;
+    }
+}
+
+@media (min-width: 768px) {
+    #left-arrow {
+        margin-left: 25%;
+    }
+
+    #right-arrow {
+        margin-right: 25%;
+    }
+}
