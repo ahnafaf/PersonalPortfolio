@@ -1,33 +1,32 @@
+:root {
+    --main-bg-color: #000;
+    --text-color: #fff;
+    --accent-color: #8a2be2;
+    --secondary-accent: #00ffff;
+    --translucent-bg: rgba(0, 0, 0, 0.8);
+}
+
+/* General styles */
 body { 
     margin: 0; 
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
+    background-color: var(--main-bg-color);
+    font-family: 'Montserrat', Arial, sans-serif;
+    overflow: hidden;
+    color: var(--text-color);
 }
 
 canvas { 
     display: block; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
-#info, #debugPanel {
-    position: absolute;
-    color: white;
-    background-color: rgba(0,0,0,0.7);
-    padding: 10px;
-    touch-action: none;
-    user-select: none;
-}
-
-#info {
-    top: 10px;
-    left: 10px;
-}
-
-#debugPanel {
-    top: 10px;
-    right: 10px;
-}
-
-#introScreen {
+/* Loading Screen */
+#loadingScreen {
     position: fixed;
     top: 0;
     left: 0;
@@ -37,44 +36,345 @@ canvas {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: #000;
-    color: white;
+    background-color: var(--translucent-bg);
     z-index: 1000;
 }
 
-#introScreen h1 {
-    font-size: 3.5em;
-    text-align: center;
-    margin-bottom: 30px;
+#loadingBarContainer {
+    width: 80%;
+    max-width: 600px;
+    height: 30px;
+    background-color: #444;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 20px;
 }
 
-#startButton {
-    padding: 15px 30px;
-    font-size: 1.2em;
-    cursor: pointer;
-    background-color: transparent;
-    color: white;
-    border: 2px solid #8a2be2;
-    border-radius: 10px;
-    transition: all 0.3s ease;
+#loadingBar {
+    height: 100%;
+    width: 0;
+    background-color: var(--accent-color);
+    transition: width 0.3s;
 }
 
-#startButton:hover {
-    background-color: #8a2be2;
-    transform: scale(1.1);
+#loadingText {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
 }
 
-#spaceDriveAnimation {
+#funnyText {
+    font-size: 1rem;
+    font-style: italic;
+}
+
+/* Navigation */
+#top-bar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 999;
-    display: none;
+    right: 0;
+    background-color: var(--translucent-bg);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-#mainContent {
-    display: none;
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, var(--accent-color), var(--secondary-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
+
+.nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-list {
+    list-style-type: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-list li {
+    margin: 0 20px;
+}
+
+.nav-list a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.nav-list a i {
+    margin-right: 8px;
+    font-size: 1.5rem;
+}
+
+.nav-list a:hover {
+    color: var(--secondary-accent);
+    transform: translateY(-2px);
+}
+
+/* Text Area */
+#textArea {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    width: 300px;
+    height: calc(100% - 60px);
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.5s ease-out;
+    z-index: 2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+#textArea.active {
+    transform: translateX(0);
+}
+
+/* Floating Windows */
+.floating-window {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--translucent-bg);
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: var(--secondary-accent);
+}
+
+/* Project Cards */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.project-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+}
+
+.project-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.project-content {
+    padding: 15px;
+}
+
+.project-title {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--secondary-accent);
+}
+
+.project-description {
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.project-link {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.project-link:hover {
+    background-color: var(--secondary-accent);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #top-bar {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 10px 15px;
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    #textArea {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        transform: translateY(100%);
+        transition: transform 0.5s ease-out;
+    }
+
+    #textArea.active {
+        transform: translateY(0);
+    }
+
+    .nav-container {
+        display: none;
+        position: absolute;
+        top: 100%;
+        width: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--translucent-bg);
+        padding: 10px;
+    }
+
+    .nav-container.active { 
+        display: block; 
+    }
+
+    .nav-list {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .nav-list li { 
+        margin: 10px 0; 
+    }
+
+    .nav-list a {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+
+    .nav-list a i {
+        font-size: 1.2rem;
+    }
+
+    .menu-toggle { 
+        display: flex; 
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 21px;
+        cursor: pointer;
+    }
+
+    .menu-toggle span {
+        display: block;
+        height: 3px;
+        width: 100%;
+        background-color: var(--text-color);
+        transition: all 0.3s ease;
+    }
+
+    .interaction-cue { 
+        display: none; 
+    }
+
+    .floating-window {
+        max-width: 90%;
+        max-height: 90%;
+        padding: 15px;
+    }
+
+    .project-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .project-card {
+        margin-bottom: 20px;
+    }
+}
+
+/* Accessibility Improvements */
+.nav-list a:focus,
+.project-link:focus,
+.close-btn:focus {
+    outline: 2px solid var(--secondary-accent);
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background-color: white;
+        color: black;
+    }
+
+    #top-bar, .controls, #loadingScreen {
+        display: none;
+    }
+
+    #textArea {
+        position: static;
+        transform: none;
+        background-color: white;
+        color: black;
+    }
+}
+
+.message.fade-text {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+      z-index: 7000; /* Ensure it's above other elements */
+  }
+  
+  .message.fade-text.fade-out {
+    opacity: 0;
+  }
+  

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Earth Model</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div id="loadingScreen">
+        <div id="loadingBarContainer">
+            <div id="loadingBar"></div>
+        </div>
+        <div id="loadingText">Loading...</div>
+        <div id="funnyText">Filling up the oceans...</div>
+    </div>
+
+    <nav id="top-bar">
+        <div class="logo">Ahnaf Ahsan</div>
+        <div class="menu-toggle" id="mobile-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-container">
+            <ul class="nav-list">
+                <li><a href="#about"><i class="fas fa-user"></i> About</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
+                <li><a href="#projects"><i class="fas fa-briefcase"></i> Projects</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div id="info" class="draggable"></div>
+    <div id="textArea"></div>
+    <div id="swipeText">Click on the left arrow to move forward in my life...</div>
+    <div class="interaction-cue">
+        <i class="fas fa-info-circle"></i>
+        <span class="cue-text">Swipe to explore</span>
+    </div>
+    
+    <div class="controls">
+        <button id="left-arrow" class="arrow-button"><i class="fas fa-chevron-left"></i></button>
+        <button id="right-arrow" class="arrow-button"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- About Page -->
+    <div id="aboutPage" class="floating-window">
+        <div class="window-header">
+            <h2>About Me</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <p>Hello! I'm Ahnaf Ahsan, a passionate developer and innovator. I love creating solutions that make a difference in people's lives.</p>
+            <p>My expertise includes web development, data analysis, and machine learning. I'm always eager to learn new technologies and take on challenging projects.</p>
+        </div>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="contactPage" class="floating-window">
+        <div class="window-header">
+            <h2>Contact Me</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <form id="contactForm">
+                <input type="text" id="name" name="name" placeholder="Your Name" required>
+                <input type="email" id="email" name="email" placeholder="Your Email" required>
+                <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Projects Page -->
+    <div id="projectsPage" class="floating-window">
+        <div class="window-header">
+            <h2>My Projects</h2>
+            <button class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <div id="projectGrid" class="project-grid">
+                <!-- Project cards will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
