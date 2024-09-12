@@ -52,3 +52,20 @@
         margin-right: 25%;
     }
 }
+
+.message.fade-text {
+    position: fixed;
+    bottom: 50px; /* Adjust this value to position it above the arrows */
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1;
+    color: white; /* Ensure text is visible */
+    font-size: 18px; /* Adjust as needed */
+    z-index: 1000; /* Ensure it's above other elements */
+}
+
+.message.fade-text.fade-out {
+    opacity: 0;
+}

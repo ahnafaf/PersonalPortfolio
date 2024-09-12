@@ -365,3 +365,16 @@ canvas {
         color: black;
     }
 }
+
+.message.fade-text {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+      z-index: 7000; /* Ensure it's above other elements */
+  }
+  
+  .message.fade-text.fade-out {
+    opacity: 0;
+  }
+  

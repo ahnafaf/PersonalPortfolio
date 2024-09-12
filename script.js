@@ -12,6 +12,8 @@ let animationSpeed = 0.25;
 let isZoomedIn = false;
 let isPanning = false;
 
+let any_click = true;
+
 const lifeEvents = [
     {
         name: 'Dhaka, Bangladesh',
@@ -420,18 +422,28 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(updateFunnyText, 2000);
 });
 
-document.getElementById('left-arrow').addEventListener('click', function() {
-    if (isPanning) return;
-    isPanning = true;
+const messages = [
+    "Click on the left arrow to view details",
+    "Click left arrow to pan out or right to go back",
+];
 
-    if (!isZoomedIn) {
-        zoomInAndPan();
-    } else {
-        zoomOutAndRotate(-1);  // Move backward
-    }
-    console.log('Left arrow clicked');
-    isPanning = false;  // Reset panning status
-});
+let currentMessageIndex = 0;
+const messageElement = document.getElementById('message');
+
+// Initial message display
+messageElement.textContent = messages[currentMessageIndex];
+
+
+
+function changeMessage() {
+    messageElement.classList.add('fade-out');
+    
+    setTimeout(() => {
+        currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+        messageElement.textContent = messages[currentMessageIndex];
+        messageElement.classList.remove('fade-out');
+    }, 500); // This should match the transition duration in CSS
+}
 
 document.getElementById('right-arrow').addEventListener('click', function() {
     if (isPanning) return;
@@ -440,13 +452,28 @@ document.getElementById('right-arrow').addEventListener('click', function() {
     if (!isZoomedIn) {
         zoomInAndPan();
     } else {
-        zoomOutAndRotate(1);  // Move forward
+        zoomOutAndRotate(-1);  // Move backward
     }
-    console.log('Right arrow clicked');
+    console.log('right arrow clicked');
+    changeMessage();
     isPanning = false;  // Reset panning status
 });
 
+document.getElementById('left-arrow').addEventListener('click', function() {
+    any_click = false;
 
+    if (isPanning) return;
+    isPanning = true;
+
+    if (!isZoomedIn) {
+        zoomInAndPan();
+    } else {
+        zoomOutAndRotate(1);  // Move forward
+    }
+    console.log('left arrow clicked');
+    changeMessage();
+    isPanning = false;  // Reset panning status
+});
 
 function openWindow(windowId) {
     // Hide all windows first
@@ -470,6 +497,9 @@ function closeWindow(windowId) {
     currentOpenWindow = null;
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    messageElement.textContent = messages[currentMessageIndex];
+});
 
 
 init();
